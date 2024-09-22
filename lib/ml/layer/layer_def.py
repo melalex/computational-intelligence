@@ -4,9 +4,10 @@ from typing import Sequence, SupportsIndex
 
 import numpy as np
 
-from lib.ml.activation.activation_function import LINEAR_ACTIVATION, ActivationFunction
-from lib.ml.initializer.array_initializer import (
+from lib.ml.util.activation_function import LINEAR_ACTIVATION, ActivationFunction
+from lib.ml.util.array_initializer import (
     UNIFORM_DISTRIBUTION_INITIALIZER,
+    ZERO_INITIALIZER,
     ArrayInitializer,
 )
 
@@ -23,5 +24,7 @@ class Input(LayerDef):
 @dataclass
 class Dense(LayerDef):
     units_count: int
+    use_bias: bool = True
     activation_fun: ActivationFunction = LINEAR_ACTIVATION
-    array_initializer: ArrayInitializer = UNIFORM_DISTRIBUTION_INITIALIZER
+    weight_initializer: ArrayInitializer = UNIFORM_DISTRIBUTION_INITIALIZER
+    bias_initializer: ArrayInitializer = ZERO_INITIALIZER

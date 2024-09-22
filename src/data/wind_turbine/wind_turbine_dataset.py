@@ -4,7 +4,7 @@ from pathlib import Path
 import pandas as pd
 
 from src.data.common.data_config import DataConfig
-from src.data.common.dataset import download_dataset, unzip_file
+from src.data.common.dataset import download_dataset, split_with_ration, unzip_file
 
 
 WIND_TURBINE_DATASET_FILE = "wind_turbine_2013_2016"
@@ -26,7 +26,7 @@ def process_wind_turbine_dataset_and_save(
     config: DataConfig,
     logger: logging.Logger = logging.getLogger(__name__),
 ) -> tuple[Path, Path]:
-    train, test = process_wind_turbine_dataset(archive, logger)
+    train, test = process_wind_turbine_dataset(archive, config.test_train_ratio, logger)
 
     filename = WIND_TURBINE_DATASET_FILE + ".csv"
     train_target_path = config.train_data_path / filename
@@ -48,10 +48,11 @@ def process_wind_turbine_dataset_and_save(
 
 
 def process_wind_turbine_dataset(
-    archive: Path, logger: logging.Logger = logging.getLogger(__name__)
+    archive: Path,
+    test_train_ratio,
+    logger: logging.Logger = logging.getLogger(__name__),
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
     unzipped = unzip_file(archive, logger)
-    train = pd.read_csv(unzipped / "Train.csv", index_col=0)
-    test = pd.read_csv(unzipped / "Test.csv", index_col=0)
+    dataset = pd.read_csv(unzipped / "Train.csv", index_col=0).drop(columns=["Time"])
 
-    return train.drop(columns=["Time"]), test.drop(columns=["Time"])
+    return split_with_ration(dataset, test_train_ratio)

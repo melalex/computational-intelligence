@@ -1,8 +1,8 @@
-from dataclasses import dataclass
 import numpy as np
-from lib.ml.layer.layer_def import Dense, Input, LayerDef
-from lib.ml.layer.parameter import CompositeParams, Params, RegressionParams
-from lib.ml.loss.loss_function import LossFunction
+from lib.ml.layer.layer_def import LayerDef
+from lib.ml.layer.parameter import Params
+from lib.ml.layer.params_factory import params_from_layer_def
+from lib.ml.util.loss_function import LossFunction
 from lib.ml.model.neural_net import (
     CompiledNeuralNet,
     NeuralNet,
@@ -26,40 +26,22 @@ class SeqNet(NeuralNet):
         loss: LossFunction,
         progress_tracker: ProgressTracker = NOOP_PROGRESS_TRACKER,
     ) -> CompiledNeuralNet:
-        last_dim = 1
-        result = []
+        optimizer.prepare(lambda: params_from_layer_def(self.__layers))
 
-        for layer in self.__layers:
-            match layer:
-                case Input(units_count):
-                    last_dim = units_count
-                case Dense(units_count, activation, init):
-                    weight = init.of_shape((units_count, last_dim))
-                    bias = np.zeros((units_count, 1))
-
-                    last_dim = units_count
-
-                    result.append(RegressionParams(weight, bias, activation))
-
-        return CompiledSeqNet(
-            CompositeParams(result), loss, optimizer, progress_tracker
-        )
+        return CompiledSeqNet(loss, optimizer, progress_tracker)
 
 
 class CompiledSeqNet(CompiledNeuralNet):
-    __params: Params
     __loss: LossFunction
     __optimizer: NeuralNetOptimizer
     __progress_tracker: ProgressTracker
 
     def __init__(
         self,
-        params: Params,
         loss: LossFunction,
         optimizer: NeuralNetOptimizer,
         progress_tracker: ProgressTracker,
     ) -> None:
-        self.__params = params
         self.__loss = loss
         self.__optimizer = optimizer
         self.__progress_tracker = progress_tracker
@@ -67,24 +49,23 @@ class CompiledSeqNet(CompiledNeuralNet):
     def fit(
         self, x: ArrayLike, y: ArrayLike, epochs: int, batch_size: int = -1
     ) -> TrainedNeuralNet:
+        params = None
         cost_avg = 0
 
         for epoch in range(epochs):
             batches = self.__divide_on_mini_batches(x, y, batch_size)
             cost_total = 0
-            
+
             for batch_x, batch_y in batches:
-                result = self.__optimizer.optimize(
-                    epoch, self.__params, batch_x, batch_y, self.__loss
-                )
-                self.__params = result.params
+                result = self.__optimizer.optimize(epoch, batch_x, batch_y, self.__loss)
+                params = result.params
                 cost_total += result.cost
 
             cost_avg = cost_total / len(batches)
 
             self.__progress_tracker.track(epoch, cost_avg)
 
-        return TrainedSeqNet(self.__params, NeuralNetMetrics(cost_avg))
+        return TrainedSeqNet(params, NeuralNetMetrics(cost_avg))
 
     def __divide_on_mini_batches(
         self, x: ArrayLike, y: ArrayLike, batch_size: int

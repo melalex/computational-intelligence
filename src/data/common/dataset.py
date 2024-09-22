@@ -2,6 +2,7 @@ import logging
 from pathlib import Path
 import zipfile
 import kaggle
+import pandas as pd
 
 
 def download_dataset(owner: str, name: str, dest: Path, logger: logging.Logger) -> Path:
@@ -33,3 +34,11 @@ def unzip_file(archive: Path, logger: logging.Logger) -> Path:
             zip_ref.extractall(dest_file)
 
     return dest_file
+
+
+def split_with_ration(
+    source: pd.DataFrame, ratio: float
+) -> tuple[pd.DataFrame, pd.DataFrame]:
+    train_row_count = int(len(source.index) * ratio)
+
+    return source.iloc[:train_row_count, :], source.iloc[train_row_count:, :]

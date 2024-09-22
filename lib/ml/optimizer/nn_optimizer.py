@@ -1,13 +1,13 @@
 from abc import ABC
-from copy import deepcopy
 from dataclasses import dataclass
-from math import exp
-from typing import Tuple
+from typing import Callable
 
-import numpy as np
-from lib.ml.layer.parameter import CompositeParams, Params, RegressionParams
-from lib.ml.loss.loss_function import LossFunction
-from lib.ml.util.types import ArrayLike, ShapeLike
+from lib.ml.layer.parameter import Params
+from lib.ml.util.loss_function import LossFunction
+from lib.ml.util.types import ArrayLike
+
+
+type ParamsSupplier = Callable[[], Params]
 
 
 @dataclass
@@ -18,10 +18,12 @@ class OptimalResult:
 
 class NeuralNetOptimizer(ABC):
 
+    def prepare(self, params_supplier: ParamsSupplier) -> None:
+        pass
+
     def optimize(
         self,
         epoch: int,
-        params: Params,
         x: ArrayLike,
         y_true: ArrayLike,
         loss: LossFunction,

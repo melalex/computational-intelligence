@@ -13,6 +13,7 @@
     "ndarray",
     "randn",
     "RELU",
+    "sudhanvahg",
     "vectorize"
   ]
 }

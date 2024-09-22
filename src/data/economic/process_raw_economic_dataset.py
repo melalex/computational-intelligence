@@ -4,6 +4,7 @@ from pathlib import Path
 
 import pandas as pd
 from src.data.common.data_config import DataConfig
+from src.data.common.dataset import split_with_ration
 
 ECONOMIC_DATASET_FILENAME = "economic_1995_1997.csv"
 
@@ -23,10 +24,9 @@ def process_economic_raw_dataset_and_save(config: DataConfig, logger: logging.Lo
             pd.read_csv(config.raw_data_path / ECONOMIC_DATASET_FILENAME, sep="\t")
         )
 
-        train_row_count = int(len(dataset.index) * config.test_train_ratio)
-
-        train_dataset = dataset.iloc[:train_row_count, :]
-        test_dataset = dataset.iloc[train_row_count:, :]
+        train_dataset, test_dataset = split_with_ration(
+            dataset, config.test_train_ratio
+        )
 
         train_dataset.to_csv(train_target_path, index=False)
         test_dataset.to_csv(test_target_path, index=False)

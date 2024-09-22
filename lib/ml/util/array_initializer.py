@@ -17,5 +17,11 @@ class UniformDistributionInitializer(ArrayInitializer):
     def of_shape(self, shape: ShapeLike) -> ArrayLike:
         return np.random.uniform(low=0, high=1, size=shape)
 
+class ZeroInitializer(ArrayInitializer):
+
+    def of_shape(self, shape: ShapeLike) -> ArrayLike:
+        return np.zeros(shape)
+
 
 UNIFORM_DISTRIBUTION_INITIALIZER = UniformDistributionInitializer()
+ZERO_INITIALIZER = ZeroInitializer()

@@ -53,7 +53,7 @@ class GeneticAlgorithmNeuralNetOptimizer(NeuralNetOptimizer):
     ) -> None:
         fitnesses = [self.__fitness(p, x, y_true, loss) for p in self.__population]
         fitnesses_sum = np.sum(fitnesses)
-        breed_prop = fitnesses / (fitnesses_sum + 1e-6)
+        breed_prop = fitnesses / fitnesses_sum
         parents = np.random.choice(
             a=self.__population,
             size=self.__population_size,
@@ -71,7 +71,7 @@ class GeneticAlgorithmNeuralNetOptimizer(NeuralNetOptimizer):
     def __fitness(
         self, params: Params, x: ArrayLike, y_true: ArrayLike, loss: LossFunction
     ) -> float:
-        return 1.0 - self.__calculate_cost(params, x, y_true, loss)
+        return 1 / (self.__calculate_cost(params, x, y_true, loss) + 1e-9)
 
     def __mutate(self, epoch: int, params: Params) -> Params:
         match params:
@@ -135,7 +135,11 @@ class GeneticAlgorithmNeuralNetOptimizer(NeuralNetOptimizer):
         return brother, sister
 
     def __crossover_mask(self, shape: ShapeLike) -> ArrayLike:
-        return np.random.uniform(low=0, high=1, size=shape) > 0.5
+        # return np.random.uniform(low=0, high=1, size=shape) > 0.5
+
+        return np.array(
+            [[(row % 2) for _ in range(shape[1])] for row in range(shape[0])]
+        )
 
     def __select(self, x: ArrayLike, y_true: ArrayLike, loss: LossFunction) -> Params:
         self.__population.sort(

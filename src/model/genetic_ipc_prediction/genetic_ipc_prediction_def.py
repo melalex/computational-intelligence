@@ -2,6 +2,7 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+from lib.ml.activation.activation_function import RELU_ACTIVATION
 from lib.ml.layer.layer_def import Dense, Input
 from lib.ml.loss.loss_function import MEAN_SQUARED_ERROR
 from lib.ml.model.neural_net import TrainedNeuralNet
@@ -14,7 +15,7 @@ from src.data.economic.process_raw_economic_dataset import ECONOMIC_DATASET_FILE
 def create_genetic_ipc_prediction_net(train_data_folder: Path) -> TrainedNeuralNet:
     model = SeqNet(layers=[Input(5), Dense(10), Dense(1)])
     opt = GeneticAlgorithmNeuralNetOptimizer(
-        population_size=40, mutation_rate=320, alpha=0.05
+        population_size=40, mutation_rate=1, alpha=0.005
     )
 
     compiled = model.compile(
@@ -26,7 +27,7 @@ def create_genetic_ipc_prediction_net(train_data_folder: Path) -> TrainedNeuralN
     dataset = pd.read_csv(train_data_folder / ECONOMIC_DATASET_FILENAME)
     x, y = __split_in_x_and_y(dataset)
 
-    return compiled.fit(x, y, 1000)
+    return compiled.fit(x, y, 2000)
 
 
 def test_ipc_prediction_net(

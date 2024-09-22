@@ -16,4 +16,11 @@ class Linear(ActivationFunction):
         return z
 
 
+class Relu(ActivationFunction):
+
+    def apply(self, z: ArrayLike) -> ArrayLike:
+        return (z > 0) * z
+
+
 LINEAR_ACTIVATION = Linear()
+RELU_ACTIVATION = Relu()

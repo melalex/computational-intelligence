@@ -32,7 +32,7 @@ def plot_model_heat_map(model: TrainedNeuralNet):
 
 
 def plot_params_heat_map(params: ArrayLike, name: str) -> None:
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(figsize=(10, 10))
     ax.imshow(params)
 
     ax.set_xticks(np.arange(params.shape[1]))

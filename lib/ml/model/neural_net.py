@@ -2,6 +2,7 @@ from abc import ABC
 from dataclasses import dataclass
 from pathlib import Path
 import pickle
+from lib.ml.layer.parameter import Params
 from lib.ml.util.loss_function import LossFunction
 from lib.ml.optimizer.nn_optimizer import NeuralNetOptimizer
 from lib.ml.util.progress_tracker import ProgressTracker
@@ -13,12 +14,23 @@ class NeuralNetMetrics:
     accuracy: float
 
 
+@dataclass
+class NeuralNetHistory:
+    loss: list[float]
+
+
 class TrainedNeuralNet(ABC):
 
     def predict(self, x: ArrayLike) -> ArrayLike:
         pass
 
     def metrics(self) -> NeuralNetMetrics:
+        pass
+
+    def params(self) -> Params:
+        pass
+
+    def history(self) -> NeuralNetHistory:
         pass
 
 

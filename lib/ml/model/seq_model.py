@@ -1,11 +1,12 @@
 import numpy as np
 from lib.ml.layer.layer_def import LayerDef
-from lib.ml.layer.parameter import Params
+from lib.ml.layer.parameter import CompositeParams, Params
 from lib.ml.layer.params_factory import params_from_layer_def
 from lib.ml.util.loss_function import LossFunction
 from lib.ml.model.neural_net import (
     CompiledNeuralNet,
     NeuralNet,
+    NeuralNetHistory,
     NeuralNetMetrics,
     TrainedNeuralNet,
 )
@@ -51,21 +52,29 @@ class CompiledSeqNet(CompiledNeuralNet):
     ) -> TrainedNeuralNet:
         params = None
         cost_avg = 0
+        loss_history = []
 
-        for epoch in range(epochs):
-            batches = self.__divide_on_mini_batches(x, y, batch_size)
-            cost_total = 0
+        with self.__progress_tracker.open(epochs) as tracker:
+            for epoch in range(epochs):
+                batches = self.__divide_on_mini_batches(x, y, batch_size)
+                cost_total = 0
 
-            for batch_x, batch_y in batches:
-                result = self.__optimizer.optimize(epoch, batch_x, batch_y, self.__loss)
-                params = result.params
-                cost_total += result.cost
+                for batch_x, batch_y in batches:
+                    result = self.__optimizer.optimize(
+                        epoch, batch_x, batch_y, self.__loss
+                    )
+                    params = result.params
+                    cost_total += result.cost
 
-            cost_avg = cost_total / len(batches)
+                cost_avg = cost_total / len(batches)
 
-            self.__progress_tracker.track(epoch, cost_avg)
+                loss_history.append(cost_avg)
 
-        return TrainedSeqNet(params, NeuralNetMetrics(cost_avg))
+                tracker.track(epoch, cost_avg)
+
+        return TrainedSeqNet(
+            params, NeuralNetMetrics(cost_avg), NeuralNetHistory(loss_history)
+        )
 
     def __divide_on_mini_batches(
         self, x: ArrayLike, y: ArrayLike, batch_size: int
@@ -92,13 +101,21 @@ class CompiledSeqNet(CompiledNeuralNet):
 class TrainedSeqNet(TrainedNeuralNet):
     __params: Params
     __metrics: NeuralNetMetrics
+    __history: NeuralNetHistory
 
-    def __init__(self, params, metrics) -> None:
+    def __init__(self, params, metrics, history) -> None:
         self.__params = params
         self.__metrics = metrics
+        self.__history = history
 
     def predict(self, x: ArrayLike) -> ArrayLike:
         return self.__params.apply(x)
 
     def metrics(self):
         return self.__metrics
+
+    def history(self) -> NeuralNetHistory:
+        return self.__history
+
+    def params(self) -> Params:
+        return self.__params

@@ -61,4 +61,4 @@ def process_economic_raw_dataset(input: pd.DataFrame) -> pd.DataFrame:
     dataset["KVVE(-7)"] = dataset["KVVE(-7)"].shift(periods=7)
     dataset["IPC(+1)"] = dataset["IPC(+1)"].shift(periods=-1)
 
-    return dataset.dropna()
+    return dataset.dropna().reset_index(drop=True)

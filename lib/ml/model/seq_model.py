@@ -1,7 +1,7 @@
 import numpy as np
 from lib.ml.layer.layer_def import LayerDef
-from lib.ml.layer.parameter import CompositeParams, Params
-from lib.ml.layer.params_factory import params_from_layer_def
+from lib.ml.layer.actual_layer import CompositeLayer, Layer
+from lib.ml.layer.layer_factory import params_from_layer_def
 from lib.ml.util.loss_function import LossFunction
 from lib.ml.model.neural_net import (
     CompiledNeuralNet,
@@ -99,7 +99,7 @@ class CompiledSeqNet(CompiledNeuralNet):
 
 
 class TrainedSeqNet(TrainedNeuralNet):
-    __params: Params
+    __params: Layer
     __metrics: NeuralNetMetrics
     __history: NeuralNetHistory
 
@@ -117,5 +117,5 @@ class TrainedSeqNet(TrainedNeuralNet):
     def history(self) -> NeuralNetHistory:
         return self.__history
 
-    def params(self) -> Params:
+    def params(self) -> Layer:
         return self.__params

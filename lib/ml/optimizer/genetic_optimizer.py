@@ -1,9 +1,15 @@
 from copy import deepcopy
 from math import exp
-from typing import Tuple
 
 import numpy as np
-from lib.ml.layer.parameter import CompositeParams, Params, PerceptronParams
+from lib.ml.layer.actual_layer import (
+    ActivationLayer,
+    CompositeLayer,
+    Layer,
+    BiasedWeightLayer,
+    ReshapeLayer,
+    WeightLayer,
+)
 from lib.ml.util.loss_function import LossFunction
 from lib.ml.optimizer.nn_optimizer import (
     NeuralNetOptimizer,
@@ -17,7 +23,7 @@ class GeneticAlgorithmNeuralNetOptimizer(NeuralNetOptimizer):
     __population_size: int
     __mutation_rate: float
     __mutation_decay: float
-    __population: list[Params]
+    __population: list[Layer]
     __fitnesses: list[float]
 
     def __init__(
@@ -60,7 +66,7 @@ class GeneticAlgorithmNeuralNetOptimizer(NeuralNetOptimizer):
     def __breed(
         self, epoch: int, x: ArrayLike, y_true: ArrayLike, loss: LossFunction
     ) -> None:
-        fitnesses = [self.__fitness_idx(p, x, y_true, loss) for p in self.__population]
+        fitnesses = np.array(self.__fitnesses)
         fitnesses_sum = np.sum(fitnesses)
         breed_prop = fitnesses / fitnesses_sum
         parents = np.random.choice(
@@ -82,23 +88,27 @@ class GeneticAlgorithmNeuralNetOptimizer(NeuralNetOptimizer):
                 self.__fitnesses.append(self.__fitness_idx(mutant2, x, y_true, loss))
 
     def __fitness_idx(
-        self, params: Params, x: ArrayLike, y_true: ArrayLike, loss: LossFunction
+        self, params: Layer, x: ArrayLike, y_true: ArrayLike, loss: LossFunction
     ) -> float:
         return 1 / (self.__calculate_cost(params, x, y_true, loss) + 1e-9)
 
-    def __mutate(self, epoch: int, params: Params) -> Params:
+    def __mutate(self, epoch: int, params: Layer) -> Layer:
         match params:
-            case CompositeParams(values):
-                return CompositeParams([self.__mutate(epoch, it) for it in values])
-            case PerceptronParams(weight, bias, fun, use_bias):
+            case CompositeLayer(values):
+                return CompositeLayer([self.__mutate(epoch, it) for it in values])
+            case BiasedWeightLayer(weight, bias):
                 exp_term = self.__mutation_rate * exp(-self.__mutation_decay * epoch)
                 weight_mutation = self.__mutation_of_shape(exp_term, weight.shape)
-                bias_mutation = (
-                    self.__mutation_of_shape(exp_term, bias.shape) if use_bias else 0
-                )
-                return PerceptronParams(
-                    weight + weight_mutation, bias + bias_mutation, fun, use_bias
-                )
+                bias_mutation = self.__mutation_of_shape(exp_term, bias.shape)
+
+                return BiasedWeightLayer(weight + weight_mutation, bias + bias_mutation)
+            case WeightLayer(weight):
+                exp_term = self.__mutation_rate * exp(-self.__mutation_decay * epoch)
+                weight_mutation = self.__mutation_of_shape(exp_term, weight.shape)
+
+                return WeightLayer(weight + weight_mutation)
+            case ReshapeLayer(_) | ActivationLayer(_) as it:
+                return it
 
     def __mutation_of_shape(self, exp_term: float, shape: ShapeLike) -> ArrayLike:
         return (
@@ -108,33 +118,36 @@ class GeneticAlgorithmNeuralNetOptimizer(NeuralNetOptimizer):
             * exp_term
         )
 
-    def __crossover(self, father: Params, mother: Params) -> tuple[Params, Params]:
+    def __crossover(self, father: Layer, mother: Layer) -> tuple[Layer, Layer]:
         match father, mother:
-            case CompositeParams(father_values), CompositeParams(mother_values):
+            case CompositeLayer(father_values), CompositeLayer(mother_values):
                 children = [
                     self.__crossover(f, m) for f, m in zip(father_values, mother_values)
                 ]
 
-                brothers = CompositeParams([it[0] for it in children])
-                sisters = CompositeParams([it[1] for it in children])
+                brothers = CompositeLayer([it[0] for it in children])
+                sisters = CompositeLayer([it[1] for it in children])
 
                 return brothers, sisters
-            case PerceptronParams(
-                father_weight, father_bias, fun, use_bias
-            ), PerceptronParams(mother_weight, mother_bias, _, _):
+            case BiasedWeightLayer(f_w, f_b), BiasedWeightLayer(m_w, m_b):
+                brother_weight, sister_weight = self.__crossover_arr(f_w, m_w)
+                brother_bias, sister_bias = self.__crossover_arr(f_b, m_b)
+
+                brother = BiasedWeightLayer(brother_weight, brother_bias)
+                sister = BiasedWeightLayer(sister_weight, sister_bias)
+
+                return brother, sister
+            case WeightLayer(father_weight), WeightLayer(mother_weight):
                 brother_weight, sister_weight = self.__crossover_arr(
                     father_weight, mother_weight
                 )
-                brother_bias, sister_bias = (
-                    self.__crossover_arr(father_bias, mother_bias)
-                    if use_bias
-                    else (None, None)
-                )
 
-                brother = PerceptronParams(brother_weight, brother_bias, fun, use_bias)
-                sister = PerceptronParams(sister_weight, sister_bias, fun, use_bias)
+                brother = WeightLayer(brother_weight)
+                sister = WeightLayer(sister_weight)
 
                 return brother, sister
+            case it:
+                return it
 
     def __crossover_arr(
         self, father: ArrayLike, mother: ArrayLike
@@ -152,7 +165,7 @@ class GeneticAlgorithmNeuralNetOptimizer(NeuralNetOptimizer):
     def __crossover_mask(self, shape: ShapeLike) -> ArrayLike:
         return np.random.uniform(low=0, high=1, size=shape) > 0.5
 
-    def __select(self) -> Params:
+    def __select(self) -> Layer:
         np_fitness = np.array(self.__fitnesses)
         np_population = np.array(self.__population)
 
@@ -162,6 +175,6 @@ class GeneticAlgorithmNeuralNetOptimizer(NeuralNetOptimizer):
         self.__fitnesses = np_fitness[order][: self.__population_size].tolist()
 
     def __calculate_cost(
-        self, params: Params, x: ArrayLike, y_true: ArrayLike, loss: LossFunction
+        self, params: Layer, x: ArrayLike, y_true: ArrayLike, loss: LossFunction
     ) -> float:
         return loss.apply(y_true, params.apply(x))

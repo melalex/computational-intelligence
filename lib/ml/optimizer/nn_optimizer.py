@@ -2,17 +2,17 @@ from abc import ABC
 from dataclasses import dataclass
 from typing import Callable
 
-from lib.ml.layer.parameter import Params
+from lib.ml.layer.actual_layer import Layer
 from lib.ml.util.loss_function import LossFunction
 from lib.ml.util.types import ArrayLike
 
 
-type ParamsSupplier = Callable[[], Params]
+type ParamsSupplier = Callable[[], Layer]
 
 
 @dataclass
 class OptimalResult:
-    params: Params
+    params: Layer
     cost: float
 
 

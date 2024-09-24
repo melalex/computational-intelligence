@@ -25,7 +25,7 @@ def plot_diff(y_true: ArrayLike, y_predicted: ArrayLike, size=(14, 7)):
 
 
 def plot_model_heat_map(model: TrainedNeuralNet):
-    params = model.params().as_dict()
+    params = model.params().learned_params()
 
     for k, v in params.items():
         plot_params_heat_map(v, k)

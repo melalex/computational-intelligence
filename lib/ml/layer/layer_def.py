@@ -10,6 +10,7 @@ from lib.ml.util.array_initializer import (
     ZERO_INITIALIZER,
     ArrayInitializer,
 )
+from lib.ml.util.types import ShapeLike
 
 
 class LayerDef(ABC):
@@ -18,7 +19,15 @@ class LayerDef(ABC):
 
 @dataclass
 class Input(LayerDef):
-    units_count: int
+    shape: ShapeLike
+
+    def __init__(self, units_count=None, shape=None):
+        self.shape = shape if shape else (units_count,)
+
+
+@dataclass
+class Reshape(LayerDef):
+    targe_shape: ShapeLike
 
 
 @dataclass

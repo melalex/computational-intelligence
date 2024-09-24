@@ -2,7 +2,7 @@ from abc import ABC
 from dataclasses import dataclass
 from pathlib import Path
 import pickle
-from lib.ml.layer.parameter import Params
+from lib.ml.layer.actual_layer import Layer
 from lib.ml.util.loss_function import LossFunction
 from lib.ml.optimizer.nn_optimizer import NeuralNetOptimizer
 from lib.ml.util.progress_tracker import ProgressTracker
@@ -27,7 +27,7 @@ class TrainedNeuralNet(ABC):
     def metrics(self) -> NeuralNetMetrics:
         pass
 
-    def params(self) -> Params:
+    def params(self) -> Layer:
         pass
 
     def history(self) -> NeuralNetHistory:

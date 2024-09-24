@@ -14,7 +14,7 @@ class ProgressTracker(ABC):
         pass
 
     def open(self, epoch_count):
-        pass
+        return self
 
     def track(self, i: int, cost: float) -> None:
         pass

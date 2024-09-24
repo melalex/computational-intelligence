@@ -1,6 +1,7 @@
 /data/external
 /data/processed
 /.venv
+/.vscode
 /Makefile.venv
 /models
 __pycache__

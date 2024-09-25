@@ -10,7 +10,7 @@ from lib.ml.layer.actual_layer import (
 )
 
 
-def params_from_layer_def(layers: list[LayerDef]) -> Layer:
+def create_layer_from_def(layers: list[LayerDef]) -> Layer:
     last_shape = (1,)
     result = []
 

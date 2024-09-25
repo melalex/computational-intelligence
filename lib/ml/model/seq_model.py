@@ -1,7 +1,7 @@
 import numpy as np
 from lib.ml.layer.layer_def import LayerDef
 from lib.ml.layer.actual_layer import CompositeLayer, Layer
-from lib.ml.layer.layer_factory import params_from_layer_def
+from lib.ml.layer.layer_factory import create_layer_from_def
 from lib.ml.util.loss_function import LossFunction
 from lib.ml.model.neural_net import (
     CompiledNeuralNet,
@@ -27,7 +27,7 @@ class SeqNet(NeuralNet):
         loss: LossFunction,
         progress_tracker: ProgressTracker = NOOP_PROGRESS_TRACKER,
     ) -> CompiledNeuralNet:
-        optimizer.prepare(lambda: params_from_layer_def(self.__layers))
+        optimizer.prepare(lambda: create_layer_from_def(self.__layers))
 
         return CompiledSeqNet(loss, optimizer, progress_tracker)
 

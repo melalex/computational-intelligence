@@ -12,14 +12,14 @@ from lib.ml.layer.actual_layer import (
 )
 from lib.ml.util.loss_function import LossFunction
 from lib.ml.optimizer.nn_optimizer import (
+    LayerSupplier,
     NeuralNetOptimizer,
     OptimalResult,
-    ParamsSupplier,
 )
 from lib.ml.util.types import ArrayLike, ShapeLike
 
 
-class GeneticAlgorithmNeuralNetOptimizer(NeuralNetOptimizer):
+class GeneticOptimizer(NeuralNetOptimizer):
     __population_size: int
     __mutation_rate: float
     __mutation_decay: float
@@ -36,7 +36,7 @@ class GeneticAlgorithmNeuralNetOptimizer(NeuralNetOptimizer):
         self.__mutation_rate = mutation_rate
         self.__mutation_decay = mutation_decay
 
-    def prepare(self, params_supplier: ParamsSupplier) -> None:
+    def prepare(self, params_supplier: LayerSupplier) -> None:
         self.__population = [params_supplier() for _ in range(self.__population_size)]
         self.__fitnesses = []
 

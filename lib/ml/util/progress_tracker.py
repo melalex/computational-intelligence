@@ -16,8 +16,13 @@ class ProgressTracker(ABC):
     def open(self, epoch_count):
         return self
 
-    def track(self, i: int, cost: float) -> None:
+    def track(self, i: int, loss: float) -> None:
         pass
+
+    def track_with_validation(
+        self, i: int, loss: float, validation_loss: float
+    ) -> None:
+        return self.track(i, loss)
 
 
 class LoggingProgressTracker(ProgressTracker):
@@ -28,9 +33,9 @@ class LoggingProgressTracker(ProgressTracker):
         self.__print_period = print_period
         self.__logger = logging.getLogger("LoggingProgressTracker")
 
-    def track(self, i: int, cost: float) -> None:
+    def track(self, i: int, loss: float) -> None:
         if i % self.__print_period == 0:
-            self.__logger.info("Iteration # [ %s ] cost is: %s", i, cost)
+            self.__logger.info("Iteration # [ %s ] loss is: %s", i, loss)
 
 
 class PrintProgressTracker(ProgressTracker):
@@ -39,14 +44,14 @@ class PrintProgressTracker(ProgressTracker):
     def __init__(self, print_period) -> None:
         self.__print_period = print_period
 
-    def track(self, i: int, cost: float) -> None:
+    def track(self, i: int, loss: float) -> None:
         if i % self.__print_period == 0:
-            print("Iteration # [ %s ] cost is: %s" % (i, cost))
+            print("Iteration # [ %s ] loss is: %s" % (i, loss))
 
 
 class NoopProgressTracker(ProgressTracker):
 
-    def track(self, i: int, cost: float) -> None:
+    def track(self, i: int, loss: float) -> None:
         pass
 
 
@@ -66,9 +71,15 @@ class NotebookProgressTracker(ProgressTracker):
         self.__epoch_count = epoch_count
         return self
 
-    def track(self, i: int, cost: float) -> None:
+    def track(self, i: int, loss: float) -> None:
         self.__pbar.update()
-        self.__pbar.set_postfix(loss=cost)
+        self.__pbar.set_postfix(loss=loss)
+
+    def track_with_validation(
+        self, i: int, loss: float, validation_loss: float
+    ) -> None:
+        self.__pbar.update()
+        self.__pbar.set_postfix(loss=loss, validation_loss=validation_loss)
 
 
 NOOP_PROGRESS_TRACKER = NoopProgressTracker()

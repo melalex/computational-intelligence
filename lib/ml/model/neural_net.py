@@ -10,21 +10,20 @@ from lib.ml.util.types import ArrayLike
 
 
 @dataclass
-class NeuralNetMetrics:
-    accuracy: float
+class NeuralNetHistory:
+    loss: list[float]
+    validation_loss: list[float]
 
 
 @dataclass
-class NeuralNetHistory:
-    loss: list[float]
+class ValidationData:
+    x: ArrayLike
+    y: ArrayLike
 
 
 class TrainedNeuralNet(ABC):
 
     def predict(self, x: ArrayLike) -> ArrayLike:
-        pass
-
-    def metrics(self) -> NeuralNetMetrics:
         pass
 
     def params(self) -> Layer:
@@ -33,11 +32,19 @@ class TrainedNeuralNet(ABC):
     def history(self) -> NeuralNetHistory:
         pass
 
+    def train_loss(self) -> float:
+        return self.history().loss[-1]
+
 
 class CompiledNeuralNet(ABC):
 
     def fit(
-        self, x: ArrayLike, y: ArrayLike, epochs: int, batch_size: int = -1
+        self,
+        x: ArrayLike,
+        y: ArrayLike,
+        epochs: int,
+        validation_data: ValidationData = None,
+        batch_size: int = -1,
     ) -> TrainedNeuralNet:
         pass
 

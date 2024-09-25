@@ -15,4 +15,5 @@ class MeanSquaredError(LossFunction):
     def apply(self, y_true: ArrayLike, y_predicted: ArrayLike) -> float:
         return np.mean(np.square(y_true - y_predicted))
 
+
 MEAN_SQUARED_ERROR = MeanSquaredError()

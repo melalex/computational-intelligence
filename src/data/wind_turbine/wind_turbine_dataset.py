@@ -2,9 +2,11 @@ import logging
 from pathlib import Path
 
 import pandas as pd
+from sklearn.model_selection import train_test_split
 
+from lib.ml.util.data_tweaks import split_with_ration
 from src.data.common.data_config import DataConfig
-from src.data.common.dataset import download_dataset, split_with_ration, unzip_file
+from src.data.common.dataset import download_dataset, unzip_file
 
 
 WIND_TURBINE_DATASET_FILE = "wind_turbine_2013_2016"
@@ -57,4 +59,10 @@ def process_wind_turbine_dataset(
     dataset = pd.read_csv(unzipped / "Train.csv", index_col=0).drop(columns=["Time"])
     reduced_dataset = dataset if take_rows == -1 else dataset.iloc[:take_rows, :]
 
-    return split_with_ration(reduced_dataset, test_train_ratio)
+    return train_test_split(reduced_dataset, train_size=test_train_ratio)
+
+def extract_x_y_from_turbine_dataset(dataset: pd.DataFrame):
+    x = dataset.iloc[:, :-1].to_numpy()
+    y = dataset.iloc[:, -1].to_numpy().reshape(1, -1)
+
+    return x, y

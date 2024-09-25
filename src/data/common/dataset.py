@@ -34,11 +34,3 @@ def unzip_file(archive: Path, logger: logging.Logger) -> Path:
             zip_ref.extractall(dest_file)
 
     return dest_file
-
-
-def split_with_ration(
-    source: pd.DataFrame, ratio: float
-) -> tuple[pd.DataFrame, pd.DataFrame]:
-    train_row_count = int(len(source.index) * ratio)
-
-    return source.iloc[:train_row_count, :], source.iloc[train_row_count:, :]

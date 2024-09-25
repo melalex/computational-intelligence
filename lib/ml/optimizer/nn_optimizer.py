@@ -7,18 +7,18 @@ from lib.ml.util.loss_function import LossFunction
 from lib.ml.util.types import ArrayLike
 
 
-type ParamsSupplier = Callable[[], Layer]
+type LayerSupplier = Callable[[], Layer]
 
 
 @dataclass
 class OptimalResult:
-    params: Layer
-    cost: float
+    target: Layer
+    loss: float
 
 
 class NeuralNetOptimizer(ABC):
 
-    def prepare(self, params_supplier: ParamsSupplier) -> None:
+    def prepare(self, params_supplier: LayerSupplier) -> None:
         pass
 
     def optimize(

@@ -3,8 +3,9 @@ import logging.config
 from pathlib import Path
 
 import pandas as pd
+from sklearn.model_selection import train_test_split
+from lib.ml.util.data_tweaks import split_with_ration
 from src.data.common.data_config import DataConfig
-from src.data.common.dataset import split_with_ration
 
 ECONOMIC_DATASET_FILENAME = "economic_1995_1997.csv"
 
@@ -24,9 +25,7 @@ def process_economic_raw_dataset_and_save(config: DataConfig, logger: logging.Lo
             pd.read_csv(config.raw_data_path / ECONOMIC_DATASET_FILENAME, sep="\t")
         )
 
-        train_dataset, test_dataset = split_with_ration(
-            dataset, config.test_train_ratio
-        )
+        train_dataset, test_dataset = train_test_split(dataset, config.test_train_ratio)
 
         train_dataset.to_csv(train_target_path, index=False)
         test_dataset.to_csv(test_target_path, index=False)

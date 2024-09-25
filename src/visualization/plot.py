@@ -13,6 +13,17 @@ def plot_loss(model: TrainedNeuralNet, size=(12, 6)) -> None:
     plt.show()
 
 
+def plot_loss_and_val_loss(model: TrainedNeuralNet, size=(12, 6)) -> None:
+    plt.figure(figsize=(12, 6))
+    plt.plot(model.history().loss, label="Training Loss")
+    plt.plot(model.history().validation_loss, label="Validation Loss")
+    plt.title("Training and Validation Loss")
+    plt.xlabel("Epoch")
+    plt.ylabel("Loss")
+    plt.legend()
+    plt.show()
+
+
 def plot_diff(y_true: ArrayLike, y_predicted: ArrayLike, size=(14, 7)):
     plt.figure(figsize=size)
     plt.plot(y_true, label="Actual", color="blue", alpha=0.7)

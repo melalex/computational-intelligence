@@ -7,8 +7,8 @@ from lib.ml.model.neural_net import (
     CompiledNeuralNet,
     NeuralNet,
     NeuralNetHistory,
-    NeuralNetMetrics,
     TrainedNeuralNet,
+    ValidationData,
 )
 from lib.ml.optimizer.nn_optimizer import NeuralNetOptimizer
 from lib.ml.util.progress_tracker import NOOP_PROGRESS_TRACKER, ProgressTracker
@@ -48,32 +48,48 @@ class CompiledSeqNet(CompiledNeuralNet):
         self.__progress_tracker = progress_tracker
 
     def fit(
-        self, x: ArrayLike, y: ArrayLike, epochs: int, batch_size: int = -1
+        self,
+        x: ArrayLike,
+        y: ArrayLike,
+        epochs: int,
+        validation_data: ValidationData = None,
+        batch_size: int = -1,
     ) -> TrainedNeuralNet:
-        params = None
-        cost_avg = 0
+        if epochs == 0:
+            return None
+
+        result = None
         loss_history = []
+        val_loss_history = []
 
         with self.__progress_tracker.open(epochs) as tracker:
             for epoch in range(epochs):
                 batches = self.__divide_on_mini_batches(x, y, batch_size)
-                cost_total = 0
+                loss_total = 0
 
                 for batch_x, batch_y in batches:
-                    result = self.__optimizer.optimize(
+                    opt_result = self.__optimizer.optimize(
                         epoch, batch_x, batch_y, self.__loss
                     )
-                    params = result.params
-                    cost_total += result.cost
+                    result = opt_result.target
+                    loss_total += opt_result.loss
 
-                cost_avg = cost_total / len(batches)
+                loss_avg = loss_total / len(batches)
 
-                loss_history.append(cost_avg)
+                loss_history.append(loss_avg)
 
-                tracker.track(epoch, cost_avg)
+                if validation_data:
+                    y_predicted = result.apply(validation_data.x)
+                    validation_loss = self.__loss.apply(validation_data.y, y_predicted)
+                    val_loss_history.append(validation_loss)
+
+                    tracker.track_with_validation(epoch, loss_avg, validation_loss)
+                else:
+                    tracker.track(epoch, loss_avg)
 
         return TrainedSeqNet(
-            params, NeuralNetMetrics(cost_avg), NeuralNetHistory(loss_history)
+            result,
+            NeuralNetHistory(loss_history, val_loss_history),
         )
 
     def __divide_on_mini_batches(
@@ -100,19 +116,14 @@ class CompiledSeqNet(CompiledNeuralNet):
 
 class TrainedSeqNet(TrainedNeuralNet):
     __params: Layer
-    __metrics: NeuralNetMetrics
     __history: NeuralNetHistory
 
-    def __init__(self, params, metrics, history) -> None:
+    def __init__(self, params, history) -> None:
         self.__params = params
-        self.__metrics = metrics
         self.__history = history
 
     def predict(self, x: ArrayLike) -> ArrayLike:
         return self.__params.apply(x)
-
-    def metrics(self):
-        return self.__metrics
 
     def history(self) -> NeuralNetHistory:
         return self.__history

@@ -13,6 +13,9 @@ class Layer(ABC):
     def apply(self, x: ArrayLike) -> ArrayLike:
         pass
 
+    def unapply(self, y: ArrayLike) -> ArrayLike:
+        pass
+
     def learned_params(self) -> dict[str, ArrayLike]:
         return {}
 
@@ -45,6 +48,13 @@ class ReshapeLayer(Layer):
             return x.reshape(self.target_shape)
         else:
             return x.reshape(self.target_shape + (x.shape[-1],))
+
+    def unapply(self, y: ArrayLike) -> ArrayLike:
+        # check whether input consist of single data point or not
+        if self.target_shape == y.shape:
+            return y.reshape(self.prev_layer_shape)
+        else:
+            return y.reshape(self.prev_layer_shape + (y.shape[-1],))
 
 
 @dataclass

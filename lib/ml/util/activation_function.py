@@ -19,7 +19,7 @@ class Linear(ActivationFunction):
         return z
 
     def apply_derivative(self, z: ArrayLike) -> ArrayLike:
-        return 1
+        return np.ones(z.shape)
 
 
 class Relu(ActivationFunction):

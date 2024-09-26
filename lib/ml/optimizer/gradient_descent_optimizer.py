@@ -19,28 +19,29 @@ from lib.ml.util.types import ArrayLike, ShapeLike
 
 class GradientDescentOptimizer(NeuralNetOptimizer):
     __learning_rate: float
-    __momentum: float
+    __momentum_decay: float
     __target: Layer
     __velocities: dict[int, dict[str, ArrayLike]]
 
-    def __init__(self, learning_rate: float, momentum: float = 0) -> None:
+    def __init__(self, learning_rate: float, momentum_decay: float = 0) -> None:
         self.__learning_rate = learning_rate
-        self.__momentum = momentum
+        self.__momentum_decay = momentum_decay
+        self.__velocities = {}
 
     def prepare(self, params_supplier: LayerSupplier) -> None:
         self.__target = params_supplier()
         self.__init_velocity(self.__target)
 
     def optimize(
-        self, epoch: int, x: ArrayLike, y_true: ArrayLike, loss: LossFunction
+        self, epoch: int, x: ArrayLike, y_true: ArrayLike, loss_fun: LossFunction
     ) -> OptimalResult:
         loss = 0
 
         match self.__target:
             case CompositeLayer(values):
-                loss = self.__optimize_deep(values, x, y_true, loss)
+                loss = self.__optimize_deep(values, x, y_true, loss_fun)
             case it:
-                loss = self.__optimize_deep([it], x, y_true, loss)
+                loss = self.__optimize_deep([it], x, y_true, loss_fun)
 
         return OptimalResult(self.__target, loss)
 
@@ -60,13 +61,13 @@ class GradientDescentOptimizer(NeuralNetOptimizer):
 
                 return da, loss
 
-            match layers[layer_num + 1]:
+            match layers[layer_num]:
                 case BiasedWeightLayer() as it:
                     z = np.dot(it.weight, a_prev) + it.bias
-                    m = a_prev.shape[1]
 
                     dz, loss = optimize_recursively(layer_num + 1, z)
 
+                    m = a_prev.shape[1]
                     dw = np.dot(dz, a_prev.T) / m
                     db = np.mean(dz, axis=1, keepdims=True)
                     da = np.dot(it.weight.T, dz)
@@ -82,10 +83,10 @@ class GradientDescentOptimizer(NeuralNetOptimizer):
                     return da, loss
                 case WeightLayer() as it:
                     z = np.dot(it.weight, a_prev)
-                    m = a_prev.shape[1]
 
                     dz, loss = optimize_recursively(layer_num + 1, z)
 
+                    m = a_prev.shape[1]
                     dw = np.dot(dz, a_prev.T) / m
                     da = np.dot(it.weight.T, dz)
 
@@ -101,7 +102,7 @@ class GradientDescentOptimizer(NeuralNetOptimizer):
 
                     da_next, loss = optimize_recursively(layer_num + 1, a)
 
-                    dz = da_next * fun.apply_derivative(z)
+                    dz = da_next * fun.apply_derivative(a_prev)
 
                     return dz, loss
                 case ReshapeLayer() as it:
@@ -133,4 +134,4 @@ class GradientDescentOptimizer(NeuralNetOptimizer):
                 }
 
     def __calculate_velocity(self, d: ArrayLike, d_velocity: ArrayLike) -> ArrayLike:
-        return self.__momentum * d_velocity + (1 - self.__momentum) * d
+        return self.__momentum_decay * d_velocity + (1 - self.__momentum_decay) * d

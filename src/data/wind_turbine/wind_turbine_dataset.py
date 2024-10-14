@@ -56,7 +56,9 @@ def process_wind_turbine_dataset(
     logger: logging.Logger = logging.getLogger(__name__),
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
     unzipped = unzip_file(archive, logger)
-    dataset = pd.read_csv(unzipped / "Train.csv", index_col=0).drop(columns=["Time"])
+    dataset = pd.read_csv(unzipped / "Train.csv", index_col=0).drop(
+        columns=["Time", "Location"]
+    )
     reduced_dataset = dataset if take_rows == -1 else dataset.iloc[:take_rows, :]
 
     return train_test_split(reduced_dataset, train_size=test_train_ratio)

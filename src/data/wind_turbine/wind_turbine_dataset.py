@@ -1,11 +1,12 @@
 import logging
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
+from sklearn.discriminant_analysis import StandardScaler
 from sklearn.model_selection import train_test_split
 
-from lib.ml.util.data_tweaks import split_with_ration
-from src.data.common.data_config import DataConfig
+from lib.ml.util.data_tweaks import rolling_window
 from src.data.common.dataset import download_dataset, unzip_file
 
 
@@ -23,48 +24,47 @@ def download_wind_turbine_dataset(
     )
 
 
-def process_wind_turbine_dataset_and_save(
-    archive: Path,
-    config: DataConfig,
-    logger: logging.Logger = logging.getLogger(__name__),
-) -> tuple[Path, Path]:
-    train, test = process_wind_turbine_dataset(archive, config.test_train_ratio, logger)
-
-    filename = WIND_TURBINE_DATASET_FILE + ".csv"
-    train_target_path = config.train_data_path / filename
-    test_target_path = config.test_data_path / filename
-
-    train.to_csv(train_target_path, index=False)
-    test.to_csv(test_target_path, index=False)
-
-    logger.info(
-        "Saved [ %s ] rows from train dataset to [ %s ]",
-        len(train.index),
-        train_target_path,
-    )
-    logger.info(
-        "Saved [ %s ] rows from test dataset to [ %s ]",
-        len(test.index),
-        test_target_path,
-    )
-
-
 def process_wind_turbine_dataset(
     archive: Path,
-    test_train_ratio,
-    take_rows: int = -1,
+    scaler: StandardScaler,
     logger: logging.Logger = logging.getLogger(__name__),
-) -> tuple[pd.DataFrame, pd.DataFrame]:
+) -> pd.DataFrame:
     unzipped = unzip_file(archive, logger)
-    dataset = pd.read_csv(unzipped / "Train.csv", index_col=0).drop(
-        columns=["Time", "Location"]
+    dataset = pd.read_csv(unzipped / "Train.csv", index_col=0).drop(columns=["Time"])
+
+    location = dataset["Location"] * 1
+
+    x = dataset.drop(columns=["Power", "Location"])
+
+    x_scaled = scaler.fit_transform(x)
+    x_scaled = pd.DataFrame(x_scaled, columns=x.columns)
+    x_scaled["Power"] = np.log1p(dataset["Power"].values)
+    x_scaled["Location"] = location.values
+
+    return pd.get_dummies(x_scaled, columns=["Location"], dtype=float)
+
+
+def window_and_split(
+    dataset: pd.DataFrame,
+    test_train_ratio: float,
+    train_valid_ratio: float,
+    window_size: int,
+) -> tuple[np.array, np.array, np.array, np.array, np.array, np.array]:
+    y = dataset["Power"].to_numpy()
+    x = dataset.to_numpy()
+
+    feat_count = x.shape[1]
+    windowed_feat_count = feat_count * window_size
+
+    x_windowed = rolling_window(x, window_size).reshape(-1, windowed_feat_count)
+    y_windowed = y[window_size:]
+
+    x_train, x_test, y_train, y_test = train_test_split(
+        x_windowed, y_windowed, train_size=test_train_ratio
     )
-    reduced_dataset = dataset if take_rows == -1 else dataset.iloc[:take_rows, :]
 
-    return train_test_split(reduced_dataset, train_size=test_train_ratio)
+    x_train, x_valid, y_train, y_valid = train_test_split(
+        x_train, y_train, train_size=train_valid_ratio
+    )
 
-def extract_x_y_from_turbine_dataset(dataset: pd.DataFrame):
-    x = dataset.iloc[:, :-1].to_numpy()
-    y = dataset.iloc[:, -1].to_numpy().reshape(1, -1)
-
-    return x, y
+    return x_train.T, y_train, x_valid.T, y_valid, x_test.T, y_test

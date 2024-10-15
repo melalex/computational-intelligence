@@ -32,14 +32,14 @@ def process_wind_turbine_dataset(
     unzipped = unzip_file(archive, logger)
     dataset = pd.read_csv(unzipped / "Train.csv", index_col=0).drop(columns=["Time"])
 
-    location = dataset["Location"] * 1
+    # dataset = dataset[dataset["Location"] == 1]
 
-    x = dataset.drop(columns=["Power", "Location"])
+    x = dataset.drop(columns=["Location"])
 
     x_scaled = scaler.fit_transform(x)
     x_scaled = pd.DataFrame(x_scaled, columns=x.columns)
-    x_scaled["Power"] = np.log1p(dataset["Power"].values)
-    x_scaled["Location"] = location.values
+    # x_scaled["Power"] = np.log1p(dataset["Power"].values)
+    x_scaled["Location"] = (dataset["Location"] * 1).values
 
     return pd.get_dummies(x_scaled, columns=["Location"], dtype=float)
 
@@ -50,6 +50,33 @@ def window_and_split(
     train_valid_ratio: float,
     window_size: int,
 ) -> tuple[np.array, np.array, np.array, np.array, np.array, np.array]:
+    x_1, y_1 = __window_for_loc(dataset[dataset["Location_1"] == 1], window_size)
+    x_2, y_2 = __window_for_loc(dataset[dataset["Location_2"] == 1], window_size)
+    x_3, y_3 = __window_for_loc(dataset[dataset["Location_3"] == 1], window_size)
+    x_4, y_4 = __window_for_loc(dataset[dataset["Location_4"] == 1], window_size)
+
+    x = np.concat([x_1, x_2, x_3, x_4])
+    y = np.concat([y_1, y_2, y_3, y_4])
+
+    x_train, x_test, y_train, y_test = train_test_split(
+        x, y, train_size=test_train_ratio
+    )
+
+    x_train, x_valid, y_train, y_valid = train_test_split(
+        x_train, y_train, train_size=train_valid_ratio
+    )
+
+    return (
+        x_train.T,
+        y_train.reshape(1, -1),
+        x_valid.T,
+        y_valid.reshape(1, -1),
+        x_test.T,
+        y_test.reshape(1, -1),
+    )
+
+
+def __window_for_loc(dataset: pd.DataFrame, window_size: int) -> pd.DataFrame:
     y = dataset["Power"].to_numpy()
     x = dataset.to_numpy()
 
@@ -59,12 +86,4 @@ def window_and_split(
     x_windowed = rolling_window(x, window_size).reshape(-1, windowed_feat_count)
     y_windowed = y[window_size:]
 
-    x_train, x_test, y_train, y_test = train_test_split(
-        x_windowed, y_windowed, train_size=test_train_ratio
-    )
-
-    x_train, x_valid, y_train, y_valid = train_test_split(
-        x_train, y_train, train_size=train_valid_ratio
-    )
-
-    return x_train.T, y_train, x_valid.T, y_valid, x_test.T, y_test
+    return x_windowed, y_windowed

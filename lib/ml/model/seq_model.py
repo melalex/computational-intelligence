@@ -11,6 +11,7 @@ from lib.ml.model.neural_net import (
     ValidationData,
 )
 from lib.ml.optimizer.nn_optimizer import NeuralNetOptimizer
+from lib.ml.util.lr_scheduler import NOOP_LR_SCHEDULER, LrScheduler
 from lib.ml.util.progress_tracker import NOOP_PROGRESS_TRACKER, ProgressTracker
 from lib.ml.util.types import ArrayLike
 
@@ -25,27 +26,31 @@ class SeqNet(NeuralNet):
         self,
         optimizer: NeuralNetOptimizer,
         loss: LossFunction,
+        lr_scheduler: LrScheduler = NOOP_LR_SCHEDULER,
         progress_tracker: ProgressTracker = NOOP_PROGRESS_TRACKER,
     ) -> CompiledNeuralNet:
         optimizer.prepare(lambda: create_layer_from_def(self.__layers))
 
-        return CompiledSeqNet(loss, optimizer, progress_tracker)
+        return CompiledSeqNet(loss, optimizer, progress_tracker, lr_scheduler)
 
 
 class CompiledSeqNet(CompiledNeuralNet):
     __loss: LossFunction
     __optimizer: NeuralNetOptimizer
     __progress_tracker: ProgressTracker
+    __lr_scheduler: LrScheduler
 
     def __init__(
         self,
         loss: LossFunction,
         optimizer: NeuralNetOptimizer,
         progress_tracker: ProgressTracker,
+        lr_scheduler: LrScheduler,
     ) -> None:
         self.__loss = loss
         self.__optimizer = optimizer
         self.__progress_tracker = progress_tracker
+        self.__lr_scheduler = lr_scheduler
 
     def fit(
         self,
@@ -83,7 +88,12 @@ class CompiledSeqNet(CompiledNeuralNet):
                     validation_loss = self.__loss.apply(validation_data.y, y_predicted)
                     val_loss_history.append(validation_loss)
 
-                    tracker.track_with_validation(epoch, loss_avg, validation_loss)
+                    if self.__lr_scheduler:
+                        self.__lr_scheduler.step(validation_loss)
+
+                    tracker.track_with_validation(
+                        epoch, loss_avg, validation_loss, self.__lr_scheduler.get_lr()
+                    )
                 else:
                     tracker.track(epoch, loss_avg)
 

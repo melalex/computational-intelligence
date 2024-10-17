@@ -14,17 +14,18 @@ from lib.ml.optimizer.nn_optimizer import (
     OptimalResult,
 )
 from lib.ml.util.loss_function import LossFunction
-from lib.ml.util.types import ArrayLike, ShapeLike
+from lib.ml.util.lr_scheduler import LrScheduler
+from lib.ml.util.types import ArrayLike
 
 
 class GradientDescentOptimizer(NeuralNetOptimizer):
-    __learning_rate: float
+    __lr_scheduler: LrScheduler
     __momentum_decay: float
     __target: Layer
     __velocities: dict[int, dict[str, ArrayLike]]
 
-    def __init__(self, learning_rate: float, momentum_decay: float = 0) -> None:
-        self.__learning_rate = learning_rate
+    def __init__(self, lr_scheduler: LrScheduler, momentum_decay: float = 0) -> None:
+        self.__lr_scheduler = lr_scheduler
         self.__momentum_decay = momentum_decay
         self.__velocities = {}
 
@@ -77,8 +78,8 @@ class GradientDescentOptimizer(NeuralNetOptimizer):
                     velocity["dw"] = self.__calculate_velocity(dw, velocity["dw"])
                     velocity["db"] = self.__calculate_velocity(db, velocity["db"])
 
-                    it.weight -= self.__learning_rate * velocity["dw"]
-                    it.bias -= self.__learning_rate * velocity["db"]
+                    it.weight -= self.__lr_scheduler.get_lr() * velocity["dw"]
+                    it.bias -= self.__lr_scheduler.get_lr() * velocity["db"]
 
                     return da, loss
                 case WeightLayer() as it:

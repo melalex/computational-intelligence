@@ -20,7 +20,7 @@ class ProgressTracker(ABC):
         pass
 
     def track_with_validation(
-        self, i: int, loss: float, validation_loss: float
+        self, i: int, loss: float, validation_loss: float, lr: float
     ) -> None:
         return self.track(i, loss)
 
@@ -76,10 +76,10 @@ class NotebookProgressTracker(ProgressTracker):
         self.__pbar.set_postfix(loss=loss)
 
     def track_with_validation(
-        self, i: int, loss: float, validation_loss: float
+        self, i: int, loss: float, validation_loss: float, lr: float
     ) -> None:
         self.__pbar.update()
-        self.__pbar.set_postfix(loss=loss, validation_loss=validation_loss)
+        self.__pbar.set_postfix(loss=loss, validation_loss=validation_loss, lr=lr)
 
 
 NOOP_PROGRESS_TRACKER = NoopProgressTracker()

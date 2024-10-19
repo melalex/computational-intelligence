@@ -37,10 +37,9 @@ def process_wind_turbine_dataset(
     x_scaled = scaler.fit_transform(x)
     x_scaled = pd.DataFrame(x_scaled, columns=x.columns)
     x_scaled["Power"] = np.log1p(dataset["Power"].values)
-    # x_scaled["Location"] = (dataset["Location"] * 1).values
+    x_scaled["Location"] = (dataset["Location"] * 1).values
 
-    # return pd.get_dummies(x_scaled, columns=["Location"], dtype=float)
-    return x_scaled
+    return pd.get_dummies(x_scaled, columns=["Location"], dtype=float)
 
 
 def window_and_split_turbine_dataset(
@@ -54,8 +53,8 @@ def window_and_split_turbine_dataset(
     x_3, y_3 = __window_for_loc(dataset[dataset["Location_3"] == 1], window_size)
     x_4, y_4 = __window_for_loc(dataset[dataset["Location_4"] == 1], window_size)
 
-    x = np.concat([x_1, x_2, x_3, x_4])
-    y = np.concat([y_1, y_2, y_3, y_4])
+    x = np.concatenate([x_1, x_2, x_3, x_4])
+    y = np.concatenate([y_1, y_2, y_3, y_4])
 
     x_train, x_test, y_train, y_test = train_test_split(
         x, y, train_size=test_train_ratio

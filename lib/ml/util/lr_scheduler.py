@@ -42,7 +42,7 @@ class ReduceLROnPlateau(LrScheduler):
     __min_lr: float
 
     def __init__(
-        self, lr: float, patience: float, factor: float, min_lr: float
+        self, lr: float, patience: int, factor: float, min_lr: float
     ) -> None:
         self.__former_best_loss = math.inf
         self.__patience = patience

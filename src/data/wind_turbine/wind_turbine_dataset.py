@@ -39,7 +39,9 @@ def process_wind_turbine_dataset(
     x_scaled["Power"] = np.log1p(dataset["Power"].values)
     x_scaled["Location"] = (dataset["Location"] * 1).values
 
-    return pd.get_dummies(x_scaled, columns=["Location"], dtype=float)
+    return pd.get_dummies(x_scaled, columns=["Location"]).map(
+        lambda x: int(x) if isinstance(x, bool) else x
+    )
 
 
 def window_and_split_turbine_dataset(
@@ -102,12 +104,12 @@ def split_turbine_dataset(
 
 def __window_for_loc(dataset: pd.DataFrame, window_size: int) -> pd.DataFrame:
     y = dataset["Power"].to_numpy()
-    x = dataset.to_numpy()
+    x = dataset.drop(columns=["Power"]).to_numpy()
 
     feat_count = x.shape[1]
     windowed_feat_count = feat_count * window_size
 
     x_windowed = rolling_window(x, window_size).reshape(-1, windowed_feat_count)
-    y_windowed = y[window_size:]
+    y_windowed = y[window_size-1:-1]
 
     return x_windowed, y_windowed

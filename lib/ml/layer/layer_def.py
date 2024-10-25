@@ -1,8 +1,6 @@
 from abc import ABC
 from dataclasses import dataclass
-from typing import Sequence, SupportsIndex
 
-import numpy as np
 
 from lib.ml.util.activation_function import LINEAR_ACTIVATION, ActivationFunction
 from lib.ml.util.array_initializer import (

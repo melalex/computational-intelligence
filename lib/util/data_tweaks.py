@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 
-from lib.ml.util.types import ArrayLike
+from lib.util.types import ArrayLike
 
 
 def rolling_window(a: ArrayLike, window: int) -> ArrayLike:

@@ -2,13 +2,13 @@ from abc import ABC
 from dataclasses import dataclass
 
 
-from lib.ml.util.activation_function import LINEAR_ACTIVATION, ActivationFunction
-from lib.ml.util.array_initializer import (
+from lib.util.activation_function import LINEAR_ACTIVATION, ActivationFunction
+from lib.util.array_initializer import (
     GLOROT_INITIALIZER,
     ZERO_INITIALIZER,
     ArrayInitializer,
 )
-from lib.ml.util.types import ShapeLike
+from lib.util.types import ShapeLike
 
 
 class LayerDef(ABC):

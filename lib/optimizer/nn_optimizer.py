@@ -2,9 +2,9 @@ from abc import ABC
 from dataclasses import dataclass
 from typing import Callable
 
-from lib.ml.layer.actual_layer import Layer
-from lib.ml.util.loss_function import LossFunction
-from lib.ml.util.types import ArrayLike
+from lib.layer.actual_layer import Layer
+from lib.util.loss_function import LossFunction
+from lib.util.types import ArrayLike
 
 
 type LayerSupplier = Callable[[], Layer]

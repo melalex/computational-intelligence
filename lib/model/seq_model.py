@@ -1,19 +1,19 @@
 import numpy as np
-from lib.ml.layer.layer_def import LayerDef
-from lib.ml.layer.actual_layer import CompositeLayer, Layer
-from lib.ml.layer.layer_factory import create_layer_from_def
-from lib.ml.util.loss_function import LossFunction
-from lib.ml.model.neural_net import (
+from lib.layer.layer_def import LayerDef
+from lib.layer.actual_layer import CompositeLayer, Layer
+from lib.layer.layer_factory import create_layer_from_def
+from lib.util.loss_function import LossFunction
+from lib.model.neural_net import (
     CompiledNeuralNet,
     NeuralNet,
     NeuralNetHistory,
     TrainedNeuralNet,
     ValidationData,
 )
-from lib.ml.optimizer.nn_optimizer import NeuralNetOptimizer
-from lib.ml.util.lr_scheduler import NOOP_LR_SCHEDULER, LrScheduler
-from lib.ml.util.progress_tracker import NOOP_PROGRESS_TRACKER, ProgressTracker
-from lib.ml.util.types import ArrayLike
+from lib.optimizer.nn_optimizer import NeuralNetOptimizer
+from lib.util.lr_scheduler import NOOP_LR_SCHEDULER, LrScheduler
+from lib.util.progress_tracker import NOOP_PROGRESS_TRACKER, ProgressTracker
+from lib.util.types import ArrayLike
 
 
 class SeqNet(NeuralNet):

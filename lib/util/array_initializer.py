@@ -3,7 +3,7 @@ import math
 
 import numpy as np
 
-from lib.ml.util.types import ArrayLike, ShapeLike
+from lib.util.types import ArrayLike, ShapeLike
 
 
 class ArrayInitializer(ABC):

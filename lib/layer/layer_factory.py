@@ -1,6 +1,6 @@
 import numpy as np
-from lib.ml.layer.layer_def import Dense, Input, LayerDef, Reshape
-from lib.ml.layer.actual_layer import (
+from lib.layer.layer_def import Dense, Input, LayerDef, Reshape
+from lib.layer.actual_layer import (
     ActivationLayer,
     CompositeLayer,
     Layer,

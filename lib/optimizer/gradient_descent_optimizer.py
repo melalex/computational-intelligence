@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 import numpy as np
-from lib.ml.layer.actual_layer import (
+from lib.layer.actual_layer import (
     ActivationLayer,
     BiasedWeightLayer,
     CompositeLayer,
@@ -8,14 +8,14 @@ from lib.ml.layer.actual_layer import (
     ReshapeLayer,
     WeightLayer,
 )
-from lib.ml.optimizer.nn_optimizer import (
+from lib.optimizer.nn_optimizer import (
     LayerSupplier,
     NeuralNetOptimizer,
     OptimalResult,
 )
-from lib.ml.util.loss_function import LossFunction
-from lib.ml.util.lr_scheduler import LrScheduler
-from lib.ml.util.types import ArrayLike
+from lib.util.loss_function import LossFunction
+from lib.util.lr_scheduler import LrScheduler
+from lib.util.types import ArrayLike
 
 
 class GradientDescentOptimizer(NeuralNetOptimizer):

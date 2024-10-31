@@ -2,11 +2,11 @@ from abc import ABC
 from dataclasses import dataclass
 from pathlib import Path
 import pickle
-from lib.ml.layer.actual_layer import Layer
-from lib.ml.util.loss_function import LossFunction
-from lib.ml.optimizer.nn_optimizer import NeuralNetOptimizer
-from lib.ml.util.progress_tracker import ProgressTracker
-from lib.ml.util.types import ArrayLike
+from lib.layer.actual_layer import Layer
+from lib.util.loss_function import LossFunction
+from lib.optimizer.nn_optimizer import NeuralNetOptimizer
+from lib.util.progress_tracker import ProgressTracker
+from lib.util.types import ArrayLike
 
 
 @dataclass

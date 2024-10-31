@@ -2,7 +2,7 @@ from copy import deepcopy
 from math import exp
 
 import numpy as np
-from lib.ml.layer.actual_layer import (
+from lib.layer.actual_layer import (
     ActivationLayer,
     CompositeLayer,
     Layer,
@@ -10,13 +10,13 @@ from lib.ml.layer.actual_layer import (
     ReshapeLayer,
     WeightLayer,
 )
-from lib.ml.util.loss_function import LossFunction
-from lib.ml.optimizer.nn_optimizer import (
+from lib.util.loss_function import LossFunction
+from lib.optimizer.nn_optimizer import (
     LayerSupplier,
     NeuralNetOptimizer,
     OptimalResult,
 )
-from lib.ml.util.types import ArrayLike, ShapeLike
+from lib.util.types import ArrayLike, ShapeLike
 
 
 class GeneticOptimizer(NeuralNetOptimizer):

@@ -6,7 +6,7 @@ import pandas as pd
 from sklearn.discriminant_analysis import StandardScaler
 from sklearn.model_selection import train_test_split
 
-from lib.ml.util.data_tweaks import rolling_window
+from lib.util.data_tweaks import rolling_window
 from src.data.common.dataset import download_dataset, unzip_file
 
 
@@ -37,11 +37,9 @@ def process_wind_turbine_dataset(
     x_scaled = scaler.fit_transform(x)
     x_scaled = pd.DataFrame(x_scaled, columns=x.columns)
     x_scaled["Power"] = np.log1p(dataset["Power"].values)
-    x_scaled["Location"] = (dataset["Location"] * 1).values
+    # x_scaled["Location"] = (dataset["Location"] * 1).values
 
-    return pd.get_dummies(x_scaled, columns=["Location"]).map(
-        lambda x: int(x) if isinstance(x, bool) else x
-    )
+    return x_scaled
 
 
 def window_and_split_turbine_dataset(

@@ -4,8 +4,8 @@ import functools
 
 import numpy as np
 
-from lib.ml.util.activation_function import ActivationFunction
-from lib.ml.util.types import ArrayLike, ShapeLike
+from lib.util.activation_function import ActivationFunction
+from lib.util.types import ArrayLike, ShapeLike
 
 
 class Layer(ABC):

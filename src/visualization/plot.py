@@ -1,7 +1,7 @@
 from matplotlib import pyplot as plt
 import numpy as np
-from lib.ml.model.neural_net import TrainedNeuralNet
-from lib.ml.util.types import ArrayLike
+from lib.model.neural_net import NeuralNetHistory, TrainedNeuralNet
+from lib.util.types import ArrayLike
 
 
 def plot_loss(model: TrainedNeuralNet, size=(12, 6)) -> None:
@@ -13,8 +13,19 @@ def plot_loss(model: TrainedNeuralNet, size=(12, 6)) -> None:
     plt.show()
 
 
+def plot_loss_history(history: NeuralNetHistory, size=(12, 6)) -> None:
+    plt.figure(figsize=size)
+    plt.plot(history.loss, label="Training Loss")
+    plt.plot(history.validation_loss, label="Validation Loss")
+    plt.title("Training and Validation Loss")
+    plt.xlabel("Epoch")
+    plt.ylabel("Loss")
+    plt.legend()
+    plt.show()
+
+
 def plot_loss_and_val_loss(model: TrainedNeuralNet, size=(12, 6)) -> None:
-    plt.figure(figsize=(12, 6))
+    plt.figure(figsize=size)
     plt.plot(model.history().loss, label="Training Loss")
     plt.plot(model.history().validation_loss, label="Validation Loss")
     plt.title("Training and Validation Loss")
@@ -40,6 +51,18 @@ def plot_model_heat_map(model: TrainedNeuralNet):
 
     for k, v in params.items():
         plot_params_heat_map(v, k)
+
+
+def plot_member_fun(mf):
+    col_count = max([len(it) for it in mf])
+    x = np.arange(-10, 10, 0.05)
+    _, axis = plt.subplots(len(mf), col_count)
+
+    for i in range(len(mf)):
+        for j in range(len(mf[i])):
+            axis[i, j].plot(x, mf[i][j].apply(x))
+
+    plt.show()
 
 
 def plot_params_heat_map(params: ArrayLike, name: str) -> None:

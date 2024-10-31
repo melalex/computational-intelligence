@@ -1,7 +1,7 @@
 from abc import ABC
 import numpy as np
 
-from lib.ml.util.types import ArrayLike
+from lib.util.types import ArrayLike
 
 
 class LossFunction(ABC):

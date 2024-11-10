@@ -2,7 +2,6 @@ import logging
 from pathlib import Path
 import zipfile
 import kaggle
-import pandas as pd
 
 
 def download_dataset(owner: str, name: str, dest: Path, logger: logging.Logger) -> Path:

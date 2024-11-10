@@ -34,22 +34,28 @@ class Anfis:
         epochs: int = 100,
         validation_data: Optional[ValidationData] = None,
     ) -> NeuralNetHistory:
+        n_feat, n_samples = x.shape
         train_loss_history = []
         val_loss_history = []
+
+        # Construct the augmented input matrix (include a raw of 1's for the intercept term)
+        x_aug = np.vstack((x, np.ones((1, n_samples))))
+        x_aug_t = x_aug.T
+        x_rep = np.hstack([x_aug_t] * n_feat)
 
         with tqdm(total=epochs, desc="Progress") as pb:
             for _ in range(epochs):
                 # Forward Pass: Compute outputs and perform LSE for consequent parameters
-                y_hat, cache = self.forward(x, y)
+                y_hat, cache = self.__forward(x, x_aug_t, y)
                 loss = self.__loss_fun.apply(y, y_hat)
 
                 # Backward Pass: Gradient descent for antecedent parameters
-                self.__backward(x, y, cache)
+                self.__backward(x, x_rep, y, cache)
 
                 pb_status = {"loss": loss}
 
                 if validation_data is not None:
-                    y_val_hat, _ = self.forward(validation_data.x)
+                    y_val_hat = self.forward(validation_data.x)
                     val_loss = self.__loss_fun.apply(validation_data.y, y_val_hat)
                     val_loss_history.append(val_loss)
 
@@ -61,7 +67,18 @@ class Anfis:
 
         return NeuralNetHistory(train_loss_history, val_loss_history)
 
-    def forward(self, x: ArrayLike, y: Optional[ArrayLike] = None):
+    def forward(self, x: ArrayLike):
+        _, n_samples = x.shape
+
+        # Construct the augmented input matrix (include a raw of 1's for the intercept term)
+        x_aug = np.vstack((x, np.ones((1, n_samples))))
+        x_aug_t = x_aug.T
+
+        result, _ = self.__forward(x, x_aug_t)
+
+        return result
+
+    def __forward(self, x: ArrayLike, x_aug_t: ArrayLike, y: Optional[ArrayLike] = None):
         # Step 1: Compute membership values for each input and rule
         membership_values = np.array(
             [
@@ -79,63 +96,47 @@ class Anfis:
 
         # Step 4: Calculate rule outputs (Layer 4 in ANFIS)
         # Each rule has a linear consequent function: y_i = p_i * x_1 + q_i * x_2 + r_i
+        a = np.hstack([x_aug_t * w.reshape(-1, 1) for w in normalized_firing_strengths])
+
         if y is not None:
             # LSE Update for consequent parameters
-            self.__consequent_params = self.__perform_lse(firing_strengths, x, y)
-
-        rule_outputs = self.__calculate_consequent_layer(x)
+            self.__consequent_params = np.linalg.lstsq(a, y, rcond=None)[0]
 
         # Step 5: Aggregate the output using normalized firing strengths (Layer 5 in ANFIS)
-        y_hat = np.sum(normalized_firing_strengths * rule_outputs, axis=0)
+        y_hat = np.dot(a, self.__consequent_params)
 
-        return y_hat, (y_hat, rule_outputs, firing_strengths_sum, firing_strengths)
+        return y_hat, (y_hat, firing_strengths_sum, firing_strengths)
 
-    def __backward(self, x, y, cache):
-        y_hat, rule_outputs, firing_strengths_sum, firing_strengths = cache
+    def __backward(self, x, x_rep, y, cache):
+        y_hat, firing_strengths_sum, firing_strengths = cache
 
-        # Backward Step 1: Compute the error and its gradient
-        d_loss = self.__loss_fun.apply_derivative(y, y_hat)
+        # Backward Step 1: Compute the error gradient
+        d_loss = self.__loss_fun.apply_derivative_elem_wise(y, y_hat)
 
-        # Backward Step 2: Calculate gradient
+        # Backward Step 2: Compute output gradient
+        d_rule_outputs = np.dot(x_rep, self.__consequent_params)
+
+        # Backward Step 3: Calculate gradient
         for i in range(len(self.__mem_fun)):
             for j in range(len(self.__mem_fun[i])):
                 mf = self.__mem_fun[i][j]
                 x_i = x[i]
 
-                # Derivative for mu_1 * mu_2. Commented because it is often equal to 0.
-                # d_and = np.prod(
-                #     [
-                #         self.__mem_fun[i][k].apply(x_i)
-                #         for k in range(len(self.__mem_fun[i]))
-                #         if k != j
-                #     ]
-                # )
+                d_and = np.prod(
+                    [
+                        self.__mem_fun[i][k].apply(x_i)
+                        for k in range(len(self.__mem_fun[i]))
+                        if k != j
+                    ],
+                    axis=0
+                )
                 d_w = (
                     d_loss
-                    * rule_outputs[i]
+                    * d_rule_outputs[i]
                     * (firing_strengths_sum - firing_strengths[i])
                     / (firing_strengths_sum**2)
-                    # * d_and
+                    * d_and
                 )
 
-                d_mean = d_w * mf.apply_d_mean(x_i)
-                d_std = d_w * mf.apply_d_std(x_i)
-
-                # Backward Step 3: Update params
-                mf.set_mean(mf.get_mean() + self.__learning_rate * np.mean(d_mean))
-                mf.set_std(mf.get_std() + self.__learning_rate * np.mean(d_std))
-
-    def __perform_lse(self, firing_strengths, x, y):
-        _, n_samples = x.shape
-
-        # Construct the augmented input matrix (include a raw of 1's for the intercept term)
-        x_aug = np.vstack((x, np.ones((1, n_samples))))
-
-        return np.array(
-            [np.linalg.lstsq((x_aug * w).T, y, rcond=None)[0] for w in firing_strengths]
-        )
-
-    def __calculate_consequent_layer(self, x):
-        return np.dot(self.__consequent_params[:, :-1], x) + self.__consequent_params[
-            :, -1
-        ].reshape(-1, 1)
+                # Backward Step 4: Update params
+                mf.backward(x_i, d_w, self.__learning_rate)

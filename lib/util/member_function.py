@@ -43,8 +43,8 @@ class GaussianMF(MemberFunction):
         d_mean = dz * self.__apply_d_mean(x)
         d_std = dz * self.__apply_d_std(x)
 
-        self.__mean -= lr * np.mean(d_mean)
-        self.__std -= lr * np.mean(d_std)
+        self.__mean -= lr * np.sum(d_mean)
+        self.__std -= lr * np.sum(d_std)
 
     def __apply_d_mean(self, x: ArrayLike) -> ArrayLike:
         return ((x - self.__mean) / (self.__std**2)) * self.apply(x)

@@ -3,7 +3,7 @@ import logging
 import logging.config
 from pathlib import Path
 
-from lib.ml.model.neural_net import read_model, write_model
+from lib.model.neural_net import read_model, write_model
 from src.definitions import (
     LOGGING_CONFIG_PATH,
     MODELS_FOLDER,

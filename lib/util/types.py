@@ -1,6 +1,6 @@
-from typing import Sequence, SupportsIndex
+from typing import Sequence, SupportsIndex, TypeAlias
 import numpy as np
 
 
-type ArrayLike = np.array
-type ShapeLike = Sequence[SupportsIndex]
+ArrayLike: TypeAlias = np.ndarray
+ShapeLike: TypeAlias = Sequence[SupportsIndex]
